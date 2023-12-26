@@ -21,6 +21,8 @@
 	<script src="https://cdn.bootcdn.net/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script>
 </head>
 <body>
+<audio id="music" src="bgm.mp3" preload="auto" loop volume="10"></audio>
+<button id="playbtn" style="display: none" onclick="playBtnClick()"></button>
 <script>
 	// if (-1 === document.cookie.indexOf('returning=true')) {
 
@@ -31,8 +33,16 @@
 			text: '1.你可以在右上角的“设置”设置烟花相关参数\n2.用手或者鼠标横向滑动下边界可以调节燃放速度哦！点击屏幕可以控制燃放数量\n3.电脑键盘快捷键： P-暂停 O-设置\n',
 			type: 'success',
 			confirmButtonText: 'Nice!'
+		}).then((e)=>{
+			document.getElementById("playbtn").click()
 		})
 		document.cookie = 'returning=true'; // set cookie
+
+	}
+
+	function playBtnClick(){
+		var music = document.getElementById('music');
+		music.play();
 	}
 	showHello();
 

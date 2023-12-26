@@ -2,7 +2,7 @@
 <html lang="en" >
 <head>
   <meta charset="UTF-8">
-  <title>烟花模拟器</title>
+  <title>新年快乐</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -17,7 +17,7 @@
 <script>
 </script>
 
-<script>LA.init({id: "JZoZ8aGfV9rGSdKm",ck: "JZoZ8aGfV9rGSdKm"})</script>
+<!--<script>LA.init({id: "JZoZ8aGfV9rGSdKm",ck: "JZoZ8aGfV9rGSdKm"})</script>-->
 	<script src="https://cdn.bootcdn.net/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script>
 </head>
 <body>
@@ -30,9 +30,11 @@
 	function showHello(){
 		swal({
 			title: '使用方法',
-			text: '1.你可以在右上角的“设置”设置烟花相关参数\n2.用手或者鼠标横向滑动下边界可以调节燃放速度哦！点击屏幕可以控制燃放数量\n3.电脑键盘快捷键： P-暂停 O-设置\n',
+			text: '新年快乐!\n点击屏幕,开始放烟花!',
 			type: 'success',
-			confirmButtonText: 'Nice!'
+			buttons: {
+				confirm: 'ok!' // 自定义确认按钮文字
+			}
 		}).then((e)=>{
 			document.getElementById("playbtn").click()
 		})

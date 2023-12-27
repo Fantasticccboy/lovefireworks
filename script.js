@@ -449,8 +449,10 @@ function handleStateChange(state, prevState) {
 	if (canPlaySound !== canPlaySoundPrev) {
 		if (canPlaySound) {
 			soundManager.resumeAll();
+			bgmSoundManager.resumeAll()
 		} else {
 			soundManager.pauseAll();
+			bgmSoundManager.pauseAll()
 		}
 	}
 }
@@ -1406,7 +1408,7 @@ function render(speed) {
 	trailsCtx.lineWidth = Star.drawWidth;
 	trailsCtx.lineCap = isLowQuality ? 'square' : 'round';
 	mainCtx.strokeStyle = '#fff';
-  mainCtx.lineWidth = 1;
+ 	mainCtx.lineWidth = 1;
 	mainCtx.beginPath();
 	COLOR_CODES.forEach(color => {
 		const stars = Star.active[color];
@@ -2198,7 +2200,6 @@ const soundManager = {
 
 	pauseAll() {
 		this.ctx.suspend();
-		document.getElementById('music').pause();
 	},
 
 	resumeAll() {
@@ -2212,7 +2213,6 @@ const soundManager = {
 		// sound, show a tooltip that they should tap again to enable sound.
 		setTimeout(() => {
 			this.ctx.resume();
-			document.getElementById('music').play();
 		}, 250);
 	},
 
@@ -2238,15 +2238,6 @@ const soundManager = {
 		// *all* the way back.
 		if (!canPlaySoundSelector() || simSpeed < 0.95) {
 			return;
-		}
-
-		// Throttle small bursts, since floral/falling leaves shells have a lot of them.
-		if (type === 'burstSmall') {
-			const now = Date.now();
-			if (now - this._lastSmallBurstTime < 20) {
-				return;
-			}
-			this._lastSmallBurstTime = now;
 		}
 
 		const source = this.sources[type];
@@ -2280,6 +2271,121 @@ const soundManager = {
 	}
 };
 
+const bgmSoundManager = {
+	baseURL: '',
+	ctx: new (window.AudioContext || window.webkitAudioContext),
+	load: false,
+	sources: {
+		bgm: {
+			volume: 1,
+			playbackRateMin: 1,
+			playbackRateMax: 1,
+			fileNames: [
+				'bgm.mp3',
+			]
+		},
+	},
+
+	preload() {
+		const allFilePromises = [];
+
+		function checkStatus(response) {
+			if (response.status >= 200 && response.status < 300) {
+				return response;
+			}
+			const customError = new Error(response.statusText);
+			customError.response = response;
+			throw customError;
+		}
+
+		const types = Object.keys(this.sources);
+		types.forEach(type => {
+			const source = this.sources[type];
+			const { fileNames } = source;
+			const filePromises = [];
+			fileNames.forEach(fileName => {
+				const fileURL = this.baseURL + fileName;
+				// Promise will resolve with decoded audio buffer.
+				const promise = fetch(fileURL)
+					.then(checkStatus)
+					.then(response => response.arrayBuffer())
+					.then(data => new Promise(resolve => {
+						this.ctx.decodeAudioData(data, resolve);
+					}));
+
+				filePromises.push(promise);
+				allFilePromises.push(promise);
+			});
+
+			Promise.all(filePromises)
+				.then(buffers => {
+					source.buffers = buffers;
+				});
+		});
+
+		return Promise.all(allFilePromises);
+	},
+
+	pauseAll() {
+		this.ctx.suspend();
+	},
+
+	resumeAll() {
+		// Play a sound with no volume for iOS. This 'unlocks' the audio context when the user first enables sound.
+		// Chrome mobile requires interaction before starting audio context.
+		// The sound toggle button is triggered on 'touchstart', which doesn't seem to count as a full
+		// interaction to Chrome. I guess it needs a click? At any rate if the first thing the user does
+		// is enable audio, it doesn't work. Using a setTimeout allows the first interaction to be registered.
+		// Perhaps a better solution is to track whether the user has interacted, and if not but they try enabling
+		// sound, show a tooltip that they should tap again to enable sound.
+		setTimeout(async () => {
+			// console.log('ctx.state',this.ctx.state)
+			this.ctx.resume();
+		}, 250);
+	},
+
+	// Private property used to throttle small burst sounds.
+	_lastSmallBurstTime: 0,
+
+	/**
+	 * Play a sound of `type`. Will randomly pick a file associated with type, and play it at the specified volume
+	 * and play speed, with a bit of random variance in play speed. This is all based on `sources` config.
+	 *
+	 * @param  {string} type - The type of sound to play.
+	 * @param  {?number} scale=1 - Value between 0 and 1 (values outside range will be clamped). Scales less than one
+	 *                             descrease volume and increase playback speed. This is because large explosions are
+	 *                             louder, deeper, and reverberate longer than small explosions.
+	 *                             Note that a scale of 0 will mute the sound.
+	 */
+	async loadAudio() {
+		const audioUrl = "bgm.mp3";
+		const res = await fetch(audioUrl);
+		const arrayBuffer = await res.arrayBuffer(); // byte array字节数组
+		const audioBuffer = await this.ctx.decodeAudioData(arrayBuffer, function(
+			decodeData
+		) {
+			return decodeData;
+		});
+		return audioBuffer;
+	},
+	async playSound(audioBuffer) {
+		let source = this.ctx.createBufferSource(); // 创建音频源头节点
+		const gainNode = this.ctx.createGain();
+		gainNode.gain.value = 0.6;
+		source.buffer = audioBuffer; // 设置数据
+		source.loop = true; //设置，循环播放
+		source.connect(gainNode);
+		gainNode.connect(this.ctx.destination);
+		// 可以对音频做任何控制
+		source.start(0); // 播放方法.立即播放
+	},
+	async playAudio() {
+		const audioBuffer =  await this.loadAudio();
+		this.playSound(audioBuffer);
+		this.load=true;
+	}
+};
+
 
 
 
@@ -2306,5 +2412,6 @@ if (IS_HEADER) {
 				return Promise.reject(reason);
 			}
 		);
+		bgmSoundManager.loadAudio()
 	}, 0);
 }

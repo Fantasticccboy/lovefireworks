@@ -14,20 +14,17 @@
 <meta name="msapplication-TileImage" content="https://s3-us-west-2.amazonaws.com/s.cdpn.io/329180/firework-burst-icon-v2.png">
 <link href="https://fonts.googleapis.com/css?family=Russo+One" rel="stylesheet"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">
 <link rel="stylesheet" href="./style.css">
-<script>
-</script>
-
 <!--<script>LA.init({id: "JZoZ8aGfV9rGSdKm",ck: "JZoZ8aGfV9rGSdKm"})</script>-->
 	<script src="https://cdn.bootcdn.net/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script>
 </head>
 <body>
-<audio id="music" src="bgm.mp3" preload="auto" loop volume="10"></audio>
+<audio id="music" src="bgm.mp3" preload="auto" loop volume="0.5"></audio>
 <button id="playbtn" style="display: none" onclick="playBtnClick()"></button>
 <script>
 	// if (-1 === document.cookie.indexOf('returning=true')) {
 
 	// setTimeout("showHello()",2000);
-	function showHello(){
+	async function showHello(){
 		swal({
 			title: '使用方法',
 			text: '新年快乐!\n点击屏幕,开始放烟花!',
@@ -35,8 +32,9 @@
 			buttons: {
 				confirm: 'ok!' // 自定义确认按钮文字
 			}
-		}).then((e)=>{
-			document.getElementById("playbtn").click()
+		}).then(async (e) => {
+			// document.getElementById("playbtn").click()
+			await bgmSoundManager.playAudio()
 		})
 		document.cookie = 'returning=true'; // set cookie
 
@@ -86,6 +84,8 @@
 		<div class="canvas-container">
 			<canvas id="trails-canvas"></canvas>
 			<canvas id="main-canvas"></canvas>
+			<canvas id="canvas-tips" width="500" height="200" style="border:1px solid #000;"></canvas>
+			<canvas id="countdownCanvas" width="800" height="200" style="border: 1px solid #000; transition: color 0.5s ease;"></canvas>
 		</div>
 		<div class="controls">
 			<div class="btn pause-btn">
@@ -166,5 +166,90 @@
   <script src='https://s3-us-west-2.amazonaws.com/s.cdpn.io/329180/fscreen%401.0.1.js'></script>
 <script src='https://s3-us-west-2.amazonaws.com/s.cdpn.io/329180/Stage%400.1.4.js'></script>
 <script src='https://s3-us-west-2.amazonaws.com/s.cdpn.io/329180/MyMath.js'></script><script  src="./script.js"></script>
+<script>
+	var canvas = document.getElementById("countdownCanvas");
+
+	var canvasTips = document.getElementById("canvas-tips");
+	var canvasTipsCtx = canvasTips.getContext("2d");
+	var ctx = canvas.getContext("2d");
+
+	// 设置倒计时结束的时间为2024年1月1日00:00:00
+	var countdownEndTime = new Date("2024-01-01T00:00:00").getTime();
+	var trendyColors = ['#FF6347', '#87CEFA', '#FFD700', '#FF69B4', '#00FF7F', '#40E0D0', '#FFA07A', '#8A2BE2', '#FF8C00', '#4B0082'];
+
+	function getRandomColor() {
+		var randomIndex = Math.floor(Math.random() * trendyColors.length);
+		return trendyColors[randomIndex];
+	}
+
+	function updateCountdown(beijingTime) {
+		// 计算剩余时间
+		var timeRemaining = countdownEndTime - beijingTime.getTime();
+		// 清空Canvas
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+		// 将剩余时间格式化为天、小时、分钟和秒
+		var days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+		var hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+		var minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+		var seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+		// 如果倒计时结束，显示提示信息
+		if (timeRemaining <= 0) {
+			clearInterval(countdownInterval);
+			clearInterval(countdownInterval2);
+
+			ctx.font = "40px 'Arial', sans-serif";
+			ctx.fillStyle = "#ff0043";
+			ctx.fillText("2024,新年快乐,元旦快乐!", 10, 50);
+		}else{
+			// 在Canvas上绘制剩余时间
+			var countdownText = "距离新年还有: " +days + "天 " + hours + "小时 " + minutes + "分 " + (seconds < 10 ? "0" : "") + seconds + "秒";
+			var gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+			gradient.addColorStop(0, getRandomColor());
+			gradient.addColorStop(0.5, getRandomColor());
+			gradient.addColorStop(1, getRandomColor());
+			// 使用过渡颜色
+			ctx.font = "24px 'Arial', sans-serif";
+			ctx.fillStyle = gradient;
+			// ctx.fillStyle = `rgba(255, 255, 255, ${1 - progress})`; // White color with alpha (fade out)
+			ctx.fillText(countdownText, 10, 50);
+		}
+	}
+
+	async function fetchBeijingTime() {
+		try {
+			var response = await fetch('https://worldtimeapi.org/api/timezone/Asia/Shanghai');
+			var data = await response.json();
+			return new Date(data.utc_datetime);
+		} catch (error) {
+			console.error('Error fetching Beijing time:', error);
+			return new Date();
+		}
+	}
+
+	(async function() {
+		var beijingTime = await fetchBeijingTime();
+		updateCountdown(beijingTime);
+
+		// 每秒更新一次倒计时
+		countdownInterval = setInterval(async function () {
+			beijingTime.setSeconds(beijingTime.getSeconds() + 1);
+			updateCountdown(beijingTime);
+		}, 1000);
+		// 每两分钟校准一下
+		countdownInterval2 = setInterval(async function () {
+			beijingTime = await fetchBeijingTime();
+			updateCountdown(beijingTime);
+		}, 1000 * 60 * 2);
+	})();
+
+
+	// 每秒更新一次倒计时和北京时间
+	canvasTipsCtx.font = "24px 'Arial', sans-serif";
+	canvasTipsCtx.fillStyle = "#2E8B57"; // SeaGreen color
+	canvasTipsCtx.fillText("不停点击屏幕即可绽放不同的烟花~", 10, 100);
+
+</script>
+
 </body>
 </html>

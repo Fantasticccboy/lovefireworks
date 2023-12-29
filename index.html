@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en" >
 <head>
-  <meta charset="UTF-8">
-  <title>新年快乐</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta charset="UTF-8">
+<title>新年快乐</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#000000">
@@ -12,39 +12,31 @@
 <link rel="apple-touch-icon-precomposed" href="https://s3-us-west-2.amazonaws.com/s.cdpn.io/329180/firework-burst-icon-v2.png">
 <meta name="msapplication-TileColor" content="#000000">
 <meta name="msapplication-TileImage" content="https://s3-us-west-2.amazonaws.com/s.cdpn.io/329180/firework-burst-icon-v2.png">
-<link href="https://fonts.googleapis.com/css?family=Russo+One" rel="stylesheet"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">
+<link href="https://fonts.googleapis.com/css?family=Russo+One" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">
 <link rel="stylesheet" href="./style.css">
 <!--<script>LA.init({id: "JZoZ8aGfV9rGSdKm",ck: "JZoZ8aGfV9rGSdKm"})</script>-->
-	<script src="https://cdn.bootcdn.net/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script>
 </head>
 <body>
-<audio id="music" src="bgm.mp3" preload="auto" loop volume="0.5"></audio>
-<button id="playbtn" style="display: none" onclick="playBtnClick()"></button>
 <script>
 	// if (-1 === document.cookie.indexOf('returning=true')) {
 
-	// setTimeout("showHello()",2000);
 	async function showHello(){
 		swal({
 			title: '使用方法',
 			text: '新年快乐!\n点击屏幕,开始放烟花!',
 			type: 'success',
 			buttons: {
-				confirm: 'ok!' // 自定义确认按钮文字
+				confirm: '冲！！' // 自定义确认按钮文字
 			}
 		}).then(async (e) => {
-			// document.getElementById("playbtn").click()
 			await bgmSoundManager.playAudio()
+			seqSmallBarrage()
 		})
 		document.cookie = 'returning=true'; // set cookie
 
 	}
-
-	function playBtnClick(){
-		var music = document.getElementById('music');
-		music.play();
-	}
-	showHello();
 
 	// }
 
@@ -86,6 +78,7 @@
 			<canvas id="main-canvas"></canvas>
 			<canvas id="canvas-tips" width="500" height="200" style="border:1px solid #000;"></canvas>
 			<canvas id="countdownCanvas" width="800" height="200" style="border: 1px solid #000; transition: color 0.5s ease;"></canvas>
+			<canvas id="particle-canvas" width="100%" height="100%"></canvas>
 		</div>
 		<div class="controls">
 			<div class="btn pause-btn">
@@ -168,10 +161,11 @@
 <script src='https://s3-us-west-2.amazonaws.com/s.cdpn.io/329180/MyMath.js'></script><script  src="./script.js"></script>
 <script>
 	var canvas = document.getElementById("countdownCanvas");
+	var ctx = canvas.getContext("2d");
 
 	var canvasTips = document.getElementById("canvas-tips");
 	var canvasTipsCtx = canvasTips.getContext("2d");
-	var ctx = canvas.getContext("2d");
+
 
 	// 设置倒计时结束的时间为2024年1月1日00:00:00
 	var countdownEndTime = new Date("2024-01-01T00:00:00").getTime();
@@ -187,10 +181,7 @@
 	let intervalId;
 
 	function myFunction() {
-		count++;
-
-		// 检查是否执行了一百次，如果是，则清除 setInterval
-		if (count >= 50) {
+		if (count++ >= 50) {
 			try {
 				clearInterval(intervalId);
 			}catch (e){
@@ -203,7 +194,7 @@
 
 	function startInterval() {
 		// 设置每隔一秒钟执行一次 myFunction 方法，并将返回的 interval ID 存储在变量中
-		intervalId = setInterval(myFunction, 1000);
+		intervalId = setInterval(myFunction, 3000);
 	}
 
 	function updateCountdown(beijingTime) {
@@ -229,9 +220,14 @@
 			}catch (e) {
 
 			}
-			ctx.font = "40px 'Arial', sans-serif";
-			ctx.fillStyle = "#ff0043";
-			ctx.fillText("2024,新年快乐,元旦快乐!", 10, 80);
+			var gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+			gradient.addColorStop(0, getRandomColor());
+			gradient.addColorStop(0.5, getRandomColor());
+			gradient.addColorStop(1, getRandomColor());
+			// 使用过渡颜色
+			ctx.font = "30px 'Arial', sans-serif";
+			ctx.fillStyle = gradient;
+			ctx.fillText("2024,新元伊始,诸事顺利!", 10, 80);
 			startInterval();
 		}else{
 			var components = [];
@@ -259,7 +255,6 @@
 			// 使用过渡颜色
 			ctx.font = "18px 'Arial', sans-serif";
 			ctx.fillStyle = gradient;
-			// ctx.fillStyle = `rgba(255, 255, 255, ${1 - progress})`; // White color with alpha (fade out)
 			ctx.fillText(formattedTime, 10, 80);
 		}
 	}
@@ -297,6 +292,55 @@
 	canvasTipsCtx.fillStyle = "#2E8B57"; // SeaGreen color
 	canvasTipsCtx.fillText("不停点击屏幕即可绽放不同的烟花~", 10, 150);
 
+	var particleCanvas = document.getElementById("particle-canvas");
+	var context = particleCanvas.getContext("2d");
+
+	// 创建粒子
+	var particles = [];
+	for (var i = 0; i < 10; i++) {
+		var particle = {
+			x: Math.random() * particleCanvas.width,
+			y: Math.random() * particleCanvas.height,
+			vx: Math.random() * 2 - 1,
+			vy: Math.random() * 2 - 1,
+			radius: Math.random() * 10,
+			color: "rgb(" + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + ")",
+		};
+		particles.push(particle);
+	}
+
+	// 绘制粒子
+	function draw() {
+		context.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+
+		for (var i = 0; i < particles.length; i++) {
+			var particle = particles[i];
+
+			// 更新粒子的位置
+			particle.x += particle.vx;
+			particle.y += particle.vy;
+
+			// 检查粒子是否超出画布
+			if (particle.x < 0 || particle.x > particleCanvas.width) {
+				particle.vx = -particle.vx;
+			}
+			if (particle.y < 0 || particle.y > particleCanvas.height) {
+				particle.vy = -particle.vy;
+			}
+
+			// 绘制粒子
+			context.fillStyle = particle.color;
+			context.beginPath();
+			context.arc(particle.x, particle.y, particle.radius, 0, 2 * Math.PI);
+			context.fill();
+		}
+
+		// 重复绘制
+		requestAnimationFrame(draw);
+	}
+
+	// 初始绘制
+	draw();
 </script>
 
 </body>

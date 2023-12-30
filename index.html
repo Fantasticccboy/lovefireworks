@@ -31,7 +31,7 @@
 				confirm: '冲！！' // 自定义确认按钮文字
 			}
 		}).then(async (e) => {
-			await bgmSoundManager.playAudio()
+			await bgmSoundManager.resumeAll()
 			seqSmallBarrage()
 		})
 		document.cookie = 'returning=true'; // set cookie
@@ -76,9 +76,9 @@
 		<div class="canvas-container">
 			<canvas id="trails-canvas"></canvas>
 			<canvas id="main-canvas"></canvas>
-			<canvas id="canvas-tips" width="500" height="200" style="border:1px solid #000;"></canvas>
-			<canvas id="countdownCanvas" width="800" height="200" style="border: 1px solid #000; transition: color 0.5s ease;"></canvas>
-			<canvas id="particle-canvas" width="100%" height="100%"></canvas>
+			<canvas id="canvas-tips" style="border:1px solid #000;"></canvas>
+			<canvas id="countdownCanvas" style="border: 1px solid #000; transition: color 0.5s ease;"></canvas>
+			<canvas id="particle-canvas"></canvas>
 		</div>
 		<div class="controls">
 			<div class="btn pause-btn">
@@ -227,7 +227,30 @@
 			// 使用过渡颜色
 			ctx.font = "30px 'Arial', sans-serif";
 			ctx.fillStyle = gradient;
-			ctx.fillText("2024,新元伊始,诸事顺利!", 10, 80);
+			var text = "2024,新元伊始,诸事顺利!";
+
+			// 初始字体大小
+			var fontSize = 30;
+
+			// 设置字体样式
+			ctx.font = fontSize + 'px Arial';
+
+			// 测量文本宽度
+			var textWidth = ctx.measureText(text).width;
+
+			// 如果文本宽度超出Canvas宽度，缩小字体大小
+			while (textWidth > canvas.width) {
+				fontSize--;
+				ctx.font = fontSize + 'px Arial';
+				textWidth = ctx.measureText(text).width;
+			}
+
+			// 计算文本的起始位置
+			var x = (canvas.width - textWidth) / 2;
+
+			ctx.fillText(text, x, 80);
+
+
 			startInterval();
 		}else{
 			var components = [];
@@ -255,7 +278,26 @@
 			// 使用过渡颜色
 			ctx.font = "18px 'Arial', sans-serif";
 			ctx.fillStyle = gradient;
-			ctx.fillText(formattedTime, 10, 80);
+			// 初始字体大小
+			var fontSize = 30;
+
+			// 设置字体样式
+			ctx.font = fontSize + 'px Arial';
+
+			// 测量文本宽度
+			var textWidth = ctx.measureText(formattedTime).width;
+
+			// 如果文本宽度超出Canvas宽度，缩小字体大小
+			while (textWidth > canvas.width) {
+				fontSize--;
+				ctx.font = fontSize + 'px Arial';
+				textWidth = ctx.measureText(formattedTime).width;
+			}
+
+			// 计算文本的起始位置
+			var x = (canvas.width - textWidth) / 2;
+
+			ctx.fillText(formattedTime, x, 80);
 		}
 	}
 
@@ -285,26 +327,22 @@
 			updateCountdown(beijingTime);
 		}, 1000 * 60 * 2);
 	})();
+	showTips();
 
-
-	// 每秒更新一次倒计时和北京时间
-	canvasTipsCtx.font = "18px 'Arial', sans-serif";
-	canvasTipsCtx.fillStyle = "#2E8B57"; // SeaGreen color
-	canvasTipsCtx.fillText("不停点击屏幕即可绽放不同的烟花~", 10, 150);
 
 	var particleCanvas = document.getElementById("particle-canvas");
 	var context = particleCanvas.getContext("2d");
 
 	// 创建粒子
 	var particles = [];
-	for (var i = 0; i < 10; i++) {
+	for (var i = 0; i < 20; i++) {
 		var particle = {
 			x: Math.random() * particleCanvas.width,
 			y: Math.random() * particleCanvas.height,
 			vx: Math.random() * 2 - 1,
 			vy: Math.random() * 2 - 1,
 			radius: Math.random() * 10,
-			color: "rgb(" + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + ")",
+			color: getRandomColor(),
 		};
 		particles.push(particle);
 	}
@@ -341,6 +379,32 @@
 
 	// 初始绘制
 	draw();
+
+	function showTips(){
+		var textTips = "不停点击屏幕即可绽放不同的烟花~";
+
+		var fontSize = 30;
+
+		// 设置字体样式
+		canvasTipsCtx.font = fontSize + 'px Arial';
+
+		// 测量文本宽度
+		var textWidth = canvasTipsCtx.measureText(textTips).width;
+
+		// 如果文本宽度超出Canvas宽度，缩小字体大小
+		while (textWidth > canvas.width) {
+			fontSize--;
+			canvasTipsCtx.font = fontSize + 'px Arial';
+			textWidth = canvasTipsCtx.measureText(textTips).width;
+		}
+
+		// 计算文本的起始位置
+		var x = (canvasTips.width - textWidth) / 2;
+
+
+		canvasTipsCtx.fillStyle = "#2E8B57"; // SeaGreen color
+		canvasTipsCtx.fillText(textTips, x, 150);
+	}
 </script>
 
 </body>

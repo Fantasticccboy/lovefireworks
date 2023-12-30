@@ -1206,6 +1206,14 @@ function handleResize() {
 	var particleCanvas = document.getElementById("particle-canvas");
 	particleCanvas.width = containerW;
 	particleCanvas.height = containerH;
+
+	var countdownCanvas = document.getElementById("countdownCanvas");
+	countdownCanvas.width = containerW;
+	countdownCanvas.height = containerH
+
+	var canvasTips = document.getElementById("canvas-tips");
+	canvasTips.width = containerW;
+	canvasTips.height = containerH
 }
 
 // Compute initial dimensions
@@ -2334,7 +2342,9 @@ const bgmSoundManager = {
 	},
 
 	pauseAll() {
-		this.ctx.suspend();
+		setTimeout(async ()=>{
+			await this.ctx.suspend();
+		},250)
 	},
 
 	resumeAll() {
@@ -2389,7 +2399,6 @@ const bgmSoundManager = {
 	async playAudio() {
 		const audioBuffer =  await this.loadAudio();
 		this.playSound(audioBuffer);
-		this.load=true;
 	}
 };
 
@@ -2419,6 +2428,6 @@ if (IS_HEADER) {
 				return Promise.reject(reason);
 			}
 		);
-		bgmSoundManager.loadAudio()
+		bgmSoundManager.playAudio()
 	}, 0);
 }
